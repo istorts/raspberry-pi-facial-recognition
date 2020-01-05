@@ -1,7 +1,5 @@
 #raspberry pi
 from picamera import PiCamera
-from time import sleep
-import os
 
 #create pi camera object
 camera = PiCamera()
