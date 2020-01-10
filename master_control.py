@@ -4,17 +4,17 @@
 
 import os
 from gpiozero import LED
+import cv2
+import cvlib as cv
 
-import picture_capture
-import submit_picture
-#import signal_control
+
 
 #this is the location of where the image is to be saved
 file_location = os.getcwd()
 #this will give the image a name to locate it later so it can be sent away
 file_name = 'image.jpg' 
-#s3 bucket name
-bucket = 'raspberry-pi-facial-recognition'
+#start picture object
+camera = PiCamera()
 
 #create light objects
 red = LED(27)
@@ -25,30 +25,27 @@ green = LED(17)
 yellow.on()
 
 while True:
-    try:
-        #take picture
-        picture_capture.take_picture(file_location, file_name)
-    except:
-        print('ERROR: Could not take picutre')
-        break
-    try:
-        #send picture from Pi to s3
-        submit_picture.upload_to_s3(bucket, file_location, file_name)
-    except:
-        print('ERROR: Could not upload image to s3')
-        break
-    try:
-        #send picture from s3 to rekognition
-        response = submit_picture.send_to_rek(bucket, file_name)
-    except:
-        print('ERROR: Could submit image to rekognition.')
-        break
+	try:
+		#take picture
+		camera.capture(file_location + '/' + file_name)
+	except:
+		print('ERROR: picture could not be taken.')
+	try:
+		#import picture
+		im = cv2.imread(file_location + '/' + file_name)
+	except:
+		print('ERROR: File could not be imported'.)
+	try:
+		#run image to model
+		bbox, label, conf = cv.detect_common_objects(im)
+	except:
+		print('ERROR: Model could not be run.')
         
-    print(response)
+    print(label)
     try:
         ##test if the response is a person or face
         #turn on or off lights accordingly
-        if response == 'Person' or response == 'Face':
+        if label == 'person':
             red.off()
             yellow.off()
             green.on()
